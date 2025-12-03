@@ -3,6 +3,7 @@ import re
 import sys
 import logging
 from collections import Counter
+from math import log2
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -73,11 +74,22 @@ def maximum_likelihood_estimate(count_word: int, total_words: int) -> float:
     return count_word / total_words
 
 
-def lidstone_estimate(count_word: int, total_words: int, V: int, lam: float) -> float:
-    """Calculate the Lidstone estimate of a word given its count, the total word count, vocabulary size, and smoothing parameter lam."""
-    if total_words == 0:
+def lidstone_estimate(count_word: int, N: int, V: int, lam: float) -> float:
+    """Calculate the Lidstone estimate of a word given its count, the # total word, vocabulary size, and smoothing parameter lam.
+        N: total number of words in the training set
+        V: vocabulary size, total of unique words in the training set
+    """
+    if N == 0:
         return 0.0
-    return (count_word + lam) / (total_words + lam * V)
+    return (count_word + lam) / (N + lam * V)
+
+
+def perplexity(lam, validation_set, vocabulary, N, V) -> float:
+    """Calculate the perplexity of the Lidstone model with lambda lam on the validation set."""
+
+    return 2 ** ((-1 / N) * sum(log2(
+        lidstone_estimate(vocabulary.get(word, 0), N, V, lam)
+    ) for s in validation_set for word in s.split()))
 
 
 def main(argv=None):
@@ -118,9 +130,20 @@ def main(argv=None):
     logger.info(f"Output12:\t{maximum_likelihood_estimate(vocabulary[args.input_word], N)}")
     logger.info(f"Output13:\t{maximum_likelihood_estimate(vocabulary['unseen-word'], N)}")
 
-
     logger.info(f"Output14:\t{lidstone_estimate(vocabulary[args.input_word], N, V, 0.1)}")
     logger.info(f"Output15:\t{lidstone_estimate(vocabulary['unseen-word'], N, V, 0.1)}")
+
+    perplexities = {0.01: perplexity(0.01, validation_set, vocabulary, N, V),
+                    0.1: perplexity(0.1, validation_set, vocabulary, N, V),
+                    1.0: perplexity(1.0, validation_set, vocabulary, N, V)}
+
+    logger.info(f"Output16:\t{perplexities[0.01]}")
+    logger.info(f"Output17:\t{perplexities[0.1]}")
+    logger.info(f"Output18:\t{perplexities[1]}")
+    logger.info(f"Output19:\t{min(perplexities, key=perplexities.get)}")
+    logger.info(f"Output20:\t{min(perplexities.values())}")
+
+    # 4. Held out model training
 
 
 
