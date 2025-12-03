@@ -1,0 +1,16 @@
+Students Eyal Seckbach 324863539 
+Output1:	develop.txt
+Output2:	test.txt
+Output3:	liquidity
+Output4:	output.txt
+Output5:	300000
+Output6:	3.3333333333333333e-06
+Output7:	2124
+Output8:	212
+Output9:	1912
+Output10:	19306
+Output11:	105
+Output12:	0.0002730847655112147
+Output13:	0.0
+Output14:	0.00027197920640038755
+Output15:	2.587813571840034e-07
