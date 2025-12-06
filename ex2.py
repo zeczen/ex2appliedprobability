@@ -103,7 +103,7 @@ def main(argv=None):
     # and args.output_file are available as strings.
 
     # 1. Init
-    logger.info(f"Students Eyal Seckbach 324863539 ")
+    logger.info(f"Students Eyal Seckbach 324863539 Nitzan Davari 301733408")
     logger.info(f"Output1:\t{args.development_set}")
     logger.info(f"Output2:\t{args.test_set}")
     logger.info(f"Output3:\t{args.input_word}")
@@ -144,6 +144,11 @@ def main(argv=None):
     logger.info(f"Output20:\t{min(perplexities.values())}")
 
     # 4. Held out model training
+    firstHalveTraining = train_set[round(len(train_set) * 0.5):]
+    secondHalveHeldOut = train_set[:round(len(train_set) * 0.5)]
+    logger.info(f"Output21:\t{len(firstHalveTraining)}")
+    logger.info(f"Output22:\t{len(secondHalveHeldOut)}")
+
 
 
 
