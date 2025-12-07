@@ -2,7 +2,7 @@ import argparse
 import re
 import sys
 import logging
-from collections import Counter
+from collections import Counter,defaultdict
 from math import log2
 
 
@@ -91,6 +91,14 @@ def perplexity(lam, validation_set, vocabulary, N, V) -> float:
         lidstone_estimate(vocabulary.get(word, 0), N, V, lam)
     ) for s in validation_set for word in s.split()))
 
+def get_sorted_freq_histogram(workingset)-> dict:
+    word_counts = Counter(word for s in workingset for word in s.split())
+    set = set(word_counts.keys())
+    freq_hist = defaultdict(int)
+    for word in set:
+        freq_hist[word_counts[word]] += 1
+    return dict(sorted(freq_hist.items()))
+
 
 def main(argv=None):
     argv = argv if argv is not None else sys.argv[1:]
@@ -144,10 +152,23 @@ def main(argv=None):
     logger.info(f"Output20:\t{min(perplexities.values())}")
 
     # 4. Held out model training
-    firstHalveTraining = train_set[round(len(train_set) * 0.5):]
-    secondHalveHeldOut = train_set[:round(len(train_set) * 0.5)]
-    logger.info(f"Output21:\t{len(firstHalveTraining)}")
-    logger.info(f"Output22:\t{len(secondHalveHeldOut)}")
+    first_halve_training = train_set[round(len(train_set) * 0.5):]
+    second_halve_heldout = train_set[:round(len(train_set) * 0.5)]
+    logger.info(f"Output21:\t{len(first_halve_training)}")
+    logger.info(f"Output22:\t{len(second_halve_heldout)}")
+
+    
+    train_freq_hist_sorted = get_sorted_freq_histogram (first_halve_training )
+    heldout_freq_hist_sorted = get_sorted_freq_histogram (second_halve_heldout )
+
+
+
+
+    
+
+    vocabulary_heldout = Counter(word for s in second_halve_heldout for word in s.split())
+    held_out_occurences = vocabulary_heldout[args.input_word]
+
 
 
 
