@@ -91,13 +91,35 @@ def perplexity(lam, validation_set, vocabulary, N, V) -> float:
         lidstone_estimate(vocabulary.get(word, 0), N, V, lam)
     ) for s in validation_set for word in s.split()))
 
-def get_sorted_freq_histogram(workingset)-> dict:
-    word_counts = Counter(word for s in workingset for word in s.split())
-    set = set(word_counts.keys())
-    freq_hist = defaultdict(int)
-    for word in set:
-        freq_hist[word_counts[word]] += 1
-    return dict(sorted(freq_hist.items()))
+
+def held_out(V,train, heldout,input_word):
+    
+    train_frequencies = Counter(word for s in train for word in s.split())
+    heldout_frequencies = Counter(word for s in heldout for word in s.split())
+
+    input_freq = 0
+    if input_word in  train_frequencies :
+        input_freq = train_frequencies[input_word]
+
+    Nr_words = []
+    Nr =0
+    if input_freq != 0:
+        #collecting all words with same frequency from trainig
+        for word in train_frequencies:
+            if train_frequencies[word] == input_freq:
+                Nr_words.append(word)
+                Nr+=1
+    else: #handling unseen word case - get all the words that exist in held out and unexist in train
+        Nr_words = set(heldout_frequencies) - set(train_frequencies)
+        Nr = V - len(train_frequencies)
+
+
+
+    Tr = 0
+    for word in Nr_words:
+        Tr+= heldout_frequencies[word]
+    
+    return float(Tr) / (Nr * len(heldout_frequencies))
 
 
 def main(argv=None):
@@ -152,22 +174,18 @@ def main(argv=None):
     logger.info(f"Output20:\t{min(perplexities.values())}")
 
     # 4. Held out model training
-    first_halve_training = train_set[round(len(train_set) * 0.5):]
-    second_halve_heldout = train_set[:round(len(train_set) * 0.5)]
+    first_halve_training = train_set[:round(len(train_set) * 0.5)]
+    second_halve_heldout = train_set[round(len(train_set) * 0.5):]
     logger.info(f"Output21:\t{len(first_halve_training)}")
     logger.info(f"Output22:\t{len(second_halve_heldout)}")
 
     
-    train_freq_hist_sorted = get_sorted_freq_histogram (first_halve_training )
-    heldout_freq_hist_sorted = get_sorted_freq_histogram (second_halve_heldout )
+    V = 300_000
+    logger.info(f"Output23:\t{held_out(V,first_halve_training, second_halve_heldout,args.input_word)}")
+    logger.info(f"Output24:\t{held_out(V,first_halve_training, second_halve_heldout,'unseen-word')}")
 
 
 
-
-    
-
-    vocabulary_heldout = Counter(word for s in second_halve_heldout for word in s.split())
-    held_out_occurences = vocabulary_heldout[args.input_word]
 
 
 
