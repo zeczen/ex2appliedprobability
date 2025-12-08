@@ -67,6 +67,31 @@ def parse_text(file_path: str) -> list:
     return data
 
 
+
+def parse_text_words(file_path: str) -> list:
+    # regex: match '<TRAIN' whitespace digits ... '>'    (case-insensitive)
+    header_re = re.compile(r'<TRAIN\s+(\d+)[^>]*>', re.IGNORECASE)
+
+    with open(file_path, "r", encoding="utf-8") as fh:
+        text = fh.read()
+
+    matches = list(header_re.finditer(text))
+    ids = []
+    data = []
+    words = [] 
+
+    for i, m in enumerate(matches):
+        start = m.end()
+        end = matches[i + 1].start() if i + 1 < len(matches) else len(text)
+        block = text[start:end].strip()
+        rec_id = int(m.group(1))
+        ids.append(rec_id)
+        for word in block.split():
+            words.append(word)
+
+    return words
+
+
 def maximum_likelihood_estimate(count_word: int, total_words: int) -> float:
     """Calculate the maximum likelihood estimate (MLE) of a word given its count and the total word count."""
     if total_words == 0:
@@ -94,8 +119,8 @@ def perplexity(lam, validation_set, vocabulary, N, V) -> float:
 
 def held_out(V,train, heldout,input_word):
     
-    train_frequencies = Counter(word for s in train for word in s.split())
-    heldout_frequencies = Counter(word for s in heldout for word in s.split())
+    train_frequencies = Counter(train)
+    heldout_frequencies = Counter(heldout)
 
     input_freq = 0
     if input_word in  train_frequencies :
@@ -119,7 +144,8 @@ def held_out(V,train, heldout,input_word):
     for word in Nr_words:
         Tr+= heldout_frequencies[word]
     
-    return float(Tr) / (Nr * len(heldout_frequencies))
+    return float(Tr) / (Nr * len(heldout))
+
 
 
 def main(argv=None):
@@ -143,6 +169,7 @@ def main(argv=None):
 
     # 2. Development set preprocessing
     train_set = parse_text(args.development_set)
+    train_set_words = parse_text_words(args.development_set)
     logger.info(f"Output7:\t{len(train_set)}")
 
     # 3. Lidstone model training
@@ -174,8 +201,11 @@ def main(argv=None):
     logger.info(f"Output20:\t{min(perplexities.values())}")
 
     # 4. Held out model training
-    first_halve_training = train_set[:round(len(train_set) * 0.5)]
-    second_halve_heldout = train_set[round(len(train_set) * 0.5):]
+    first_halve_training = train_set_words[:round(len(train_set_words) * 0.5)]
+    second_halve_heldout = train_set_words[round(len(train_set_words) * 0.5):]
+
+    
+    
     logger.info(f"Output21:\t{len(first_halve_training)}")
     logger.info(f"Output22:\t{len(second_halve_heldout)}")
 
