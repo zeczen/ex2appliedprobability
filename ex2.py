@@ -111,12 +111,15 @@ def lidstone_estimate(count_word: int, S: int, V: int, lam: float) -> float:
     return (count_word + lam) / (S + lam * V)
 
 
-def perplexity(lam, validation_set, vocabulary, N, V) -> float:
-    """Calculate the perplexity of the Lidstone model with lambda lam on the validation set."""
-
-    return 2 ** ((-1 / N) * sum(log2(
-        lidstone_estimate(vocabulary.get(word, 0), N, V, lam)
-    ) for s in validation_set for word in s.split()))
+def perplexity(lam, validation_set, vocabulary, N_train, V):
+    return 2 ** (
+        (-1 / len(validation_set)) *
+        sum(
+            log2(lidstone_estimate(vocabulary.get(word, 0), 
+                                   N_train, V, lam))
+            for word in validation_set
+        )
+    )
 
 
 def held_out(V,train, heldout,input_word):
@@ -182,16 +185,16 @@ def main(argv=None):
 
     vocabulary = Counter(word for s in train_set for word in s.split())
     #V = len(vocabulary)
-    N = sum(vocabulary.values())
-    S = len(train_set)  #S is the amount of words seen in training
+    #N = sum(vocabulary.values())
+    N = len(train_set)
     logger.info(f"#Output10\t{len(vocabulary)}")
     logger.info(f"#Output11\t{vocabulary[args.input_word]}")
 
     logger.info(f"#Output12\t{maximum_likelihood_estimate(vocabulary[args.input_word], N)}")
     logger.info(f"#Output13\t{maximum_likelihood_estimate(vocabulary['unseen-word'], N)}")
 
-    logger.info(f"#Output14\t{lidstone_estimate(vocabulary[args.input_word], S, V, 0.1)}")
-    logger.info(f"#Output15\t{lidstone_estimate(vocabulary['unseen-word'], S, V, 0.1)}")
+    logger.info(f"#Output14\t{lidstone_estimate(vocabulary[args.input_word], N, V, 0.1)}")
+    logger.info(f"#Output15\t{lidstone_estimate(vocabulary['unseen-word'], N, V, 0.1)}")
 
     perplexities = {0.01: perplexity(0.01, validation_set, vocabulary, N, V),
                     0.1: perplexity(0.1, validation_set, vocabulary, N, V),
