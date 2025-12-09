@@ -47,32 +47,12 @@ def setup_file_logger(output_path: str) -> logging.Logger:
     return logger
 
 
-def parse_text(file_path: str) -> list:
+def parse_text_words(file_path: str , is_test) -> list:
+    
     # regex: match '<TRAIN' whitespace digits ... '>'    (case-insensitive)
     header_re = re.compile(r'<TRAIN\s+(\d+)[^>]*>', re.IGNORECASE)
-
-    with open(file_path, "r", encoding="utf-8") as fh:
-        text = fh.read()
-
-    matches = list(header_re.finditer(text))
-    ids = []
-    data = []
-
-    for i, m in enumerate(matches):
-        start = m.end()
-        end = matches[i + 1].start() if i + 1 < len(matches) else len(text)
-        block = text[start:end].strip()
-        rec_id = int(m.group(1))
-        ids.append(rec_id)
-        data.append(block)
-
-    return data
-
-
-
-def parse_text_words(file_path: str) -> list:
-    # regex: match '<TRAIN' whitespace digits ... '>'    (case-insensitive)
-    header_re = re.compile(r'<TRAIN\s+(\d+)[^>]*>', re.IGNORECASE)
+    if is_test:
+        header_re = re.compile(r'<TEST\s+(\d+)[^>]*>', re.IGNORECASE)
 
     with open(file_path, "r", encoding="utf-8") as fh:
         text = fh.read()
@@ -153,6 +133,72 @@ def held_out(V,train, heldout,input_word):
 
 
 
+    """
+    words               = list of training tokens
+    vocabulary          = list or set of all V possible tokens
+    lam                 = Lidstone lambda
+    lidstone_estimate   = lidstone_estimate(count, S, V, lam)
+    held_out            = your held-out function: held_out(V, train, heldout, input_word)
+    """
+def debug_models(words, V, lam):
+
+
+    wordsOc = Counter(words)          # word -> count
+    S = len(words)                    # total tokens in training set
+
+    # seen words
+    seen_words = list(wordsOc.keys())
+
+    # unseen words count
+    n0 = V - len(seen_words)
+
+    if n0 < 0:
+        raise ValueError("Vocabulary smaller than number of unique words?")
+
+    #  HELPER: run model function
+    def get_prob(model, word):
+        """
+        model = "lidstone" or "heldout"
+        word  = input token (string)
+        """
+        count = wordsOc.get(word, 0)
+
+        if model == "lidstone":
+            return lidstone_estimate(count, S, V, lam)
+
+        elif model == "heldout":
+            # held_out(V, train_counts, heldout_counts, word)
+            heldout_words = ["bla","blalba","dummyword"]
+            return held_out(V, wordsOc, heldout_words, word)
+
+        else:
+            raise ValueError("Invalid model type")
+
+    # Debug each model
+    for modelName in ["lidstone", "heldout"]:
+
+        # p(x*) — probability for one unseen word
+        p_unseen_single = get_prob(modelName, "__UNSEEN__")   # count=0
+
+        # probability mass for unseen block
+        unseen_mass = p_unseen_single * n0
+
+        # probability mass for all seen words
+        seen_mass = sum(get_prob(modelName, w) for w in seen_words)
+
+        check_sum = unseen_mass + seen_mass
+
+        print(f"{modelName.upper()}  -> mass_seen={seen_mass:.6f}, mass_unseen={unseen_mass:.6f}, total={check_sum:.6f}")
+
+        if abs(check_sum - 1.0) > 1e-5:
+            raise RuntimeError(f"ERROR: {modelName} probabilities do NOT sum to 1 (sum={check_sum})")
+        else:
+            print(f"{modelName} test PASSED ✓\n")
+
+    print("All checks complete.")
+
+
+
 def main(argv=None):
     argv = argv if argv is not None else sys.argv[1:]
     parser = build_parser()
@@ -174,7 +220,7 @@ def main(argv=None):
 
     # 2. Development set preprocessing
     #train_set = parse_text(args.development_set)
-    train_set_words = parse_text_words(args.development_set)
+    train_set_words = parse_text_words(args.development_set,False)
     logger.info(f"#Output7\t{len(train_set_words)}")
 
     # 3. Lidstone model training
@@ -211,16 +257,21 @@ def main(argv=None):
     # 4. Held out model training
     first_halve_training = train_set_words[:round(len(train_set_words) * 0.5)]
     second_halve_heldout = train_set_words[round(len(train_set_words) * 0.5):]
-
-    
     
     logger.info(f"#Output21\t{len(first_halve_training)}")
     logger.info(f"#Output22\t{len(second_halve_heldout)}")
-
     
-    V = 300_000
     logger.info(f"#Output23\t{held_out(V,first_halve_training, second_halve_heldout,args.input_word)}")
     logger.info(f"#Output24\t{held_out(V,first_halve_training, second_halve_heldout,'unseen-word')}")
+
+    #5 debugging modules:
+    for modelName in ["lidstone", "heldOut"]:
+        debug_models(train_set_words,V ,lam=0.1)
+
+
+    test_words = parse_text_words(args.test_set,True)
+    logger.info(f"#Output25\t{len(test_words)}")
+
 
 
 
