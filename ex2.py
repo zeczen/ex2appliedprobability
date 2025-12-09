@@ -196,9 +196,11 @@ def main(argv=None):
     logger.info(f"#Output14\t{lidstone_estimate(vocabulary[args.input_word], N, V, 0.1)}")
     logger.info(f"#Output15\t{lidstone_estimate(vocabulary['unseen-word'], N, V, 0.1)}")
 
-    perplexities = {0.01: perplexity(0.01, validation_set, vocabulary, N, V),
-                    0.1: perplexity(0.1, validation_set, vocabulary, N, V),
-                    1.0: perplexity(1.0, validation_set, vocabulary, N, V)}
+    perplexities = {}
+    for i in range (1,200):
+        lam = i / 100
+        perplexities[lam] =  perplexity(lam, validation_set, vocabulary, N, V)
+
 
     logger.info(f"#Output16\t{perplexities[0.01]}")
     logger.info(f"#Output17\t{perplexities[0.1]}")
