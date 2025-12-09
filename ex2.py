@@ -1,3 +1,5 @@
+#Students Eyal Seckbach 324863539 Nitzan Davari 301733408
+
 import argparse
 import re
 import sys
@@ -99,14 +101,14 @@ def maximum_likelihood_estimate(count_word: int, total_words: int) -> float:
     return count_word / total_words
 
 
-def lidstone_estimate(count_word: int, N: int, V: int, lam: float) -> float:
+def lidstone_estimate(count_word: int, S: int, V: int, lam: float) -> float:
     """Calculate the Lidstone estimate of a word given its count, the # total word, vocabulary size, and smoothing parameter lam.
         N: total number of words in the training set
         V: vocabulary size, total of unique words in the training set
     """
-    if N == 0:
+    if S == 0:
         return 0.0
-    return (count_word + lam) / (N + lam * V)
+    return (count_word + lam) / (S + lam * V)
 
 
 def perplexity(lam, validation_set, vocabulary, N, V) -> float:
@@ -159,46 +161,47 @@ def main(argv=None):
     # and args.output_file are available as strings.
 
     # 1. Init
-    logger.info(f"Students Eyal Seckbach 324863539 Nitzan Davari 301733408")
-    logger.info(f"Output1:\t{args.development_set}")
-    logger.info(f"Output2:\t{args.test_set}")
-    logger.info(f"Output3:\t{args.input_word}")
-    logger.info(f"Output4:\t{args.output_file}")
-    logger.info(f"Output5:\t{V}")
-    logger.info(f"Output6:\t{1 / V}")
+    logger.info(f"#Students\tEyal\tSeckbach\t324863539\tNitzan\tDavari\t301733408")
+    logger.info(f"#Output1\t{args.development_set}")
+    logger.info(f"#Output2\t{args.test_set}")
+    logger.info(f"#Output3\t{args.input_word}")
+    logger.info(f"#Output4\t{args.output_file}")
+    logger.info(f"#Output5\t{V}")
+    logger.info(f"#Output6\t{1 / V}")
 
     # 2. Development set preprocessing
-    train_set = parse_text(args.development_set)
+    #train_set = parse_text(args.development_set)
     train_set_words = parse_text_words(args.development_set)
-    logger.info(f"Output7:\t{len(train_set)}")
+    logger.info(f"#Output7\t{len(train_set_words)}")
 
     # 3. Lidstone model training
-    validation_set = train_set[round(len(train_set) * 0.9):]
-    train_set = train_set[:round(len(train_set) * 0.9)]
-    logger.info(f"Output8:\t{len(validation_set)}")
-    logger.info(f"Output9:\t{len(train_set)}")
+    validation_set = train_set_words[round(len(train_set_words) * 0.9):]
+    train_set = train_set_words[:round(len(train_set_words) * 0.9)]
+    logger.info(f"#Output8\t{len(validation_set)}")
+    logger.info(f"#Output9\t{len(train_set)}")
 
     vocabulary = Counter(word for s in train_set for word in s.split())
-    V = len(vocabulary)
+    #V = len(vocabulary)
     N = sum(vocabulary.values())
-    logger.info(f"Output10:\t{V}")
-    logger.info(f"Output11:\t{vocabulary[args.input_word]}")
+    S = len(train_set)  #S is the amount of words seen in training
+    logger.info(f"#Output10\t{len(vocabulary)}")
+    logger.info(f"#Output11\t{vocabulary[args.input_word]}")
 
-    logger.info(f"Output12:\t{maximum_likelihood_estimate(vocabulary[args.input_word], N)}")
-    logger.info(f"Output13:\t{maximum_likelihood_estimate(vocabulary['unseen-word'], N)}")
+    logger.info(f"#Output12\t{maximum_likelihood_estimate(vocabulary[args.input_word], N)}")
+    logger.info(f"#Output13\t{maximum_likelihood_estimate(vocabulary['unseen-word'], N)}")
 
-    logger.info(f"Output14:\t{lidstone_estimate(vocabulary[args.input_word], N, V, 0.1)}")
-    logger.info(f"Output15:\t{lidstone_estimate(vocabulary['unseen-word'], N, V, 0.1)}")
+    logger.info(f"#Output14\t{lidstone_estimate(vocabulary[args.input_word], S, V, 0.1)}")
+    logger.info(f"#Output15\t{lidstone_estimate(vocabulary['unseen-word'], S, V, 0.1)}")
 
     perplexities = {0.01: perplexity(0.01, validation_set, vocabulary, N, V),
                     0.1: perplexity(0.1, validation_set, vocabulary, N, V),
                     1.0: perplexity(1.0, validation_set, vocabulary, N, V)}
 
-    logger.info(f"Output16:\t{perplexities[0.01]}")
-    logger.info(f"Output17:\t{perplexities[0.1]}")
-    logger.info(f"Output18:\t{perplexities[1]}")
-    logger.info(f"Output19:\t{min(perplexities, key=perplexities.get)}")
-    logger.info(f"Output20:\t{min(perplexities.values())}")
+    logger.info(f"#Output16\t{perplexities[0.01]}")
+    logger.info(f"#Output17\t{perplexities[0.1]}")
+    logger.info(f"#Output18\t{perplexities[1]}")
+    logger.info(f"#Output19\t{min(perplexities, key=perplexities.get)}")
+    logger.info(f"#Output20\t{min(perplexities.values())}")
 
     # 4. Held out model training
     first_halve_training = train_set_words[:round(len(train_set_words) * 0.5)]
@@ -206,13 +209,13 @@ def main(argv=None):
 
     
     
-    logger.info(f"Output21:\t{len(first_halve_training)}")
-    logger.info(f"Output22:\t{len(second_halve_heldout)}")
+    logger.info(f"#Output21\t{len(first_halve_training)}")
+    logger.info(f"#Output22\t{len(second_halve_heldout)}")
 
     
     V = 300_000
-    logger.info(f"Output23:\t{held_out(V,first_halve_training, second_halve_heldout,args.input_word)}")
-    logger.info(f"Output24:\t{held_out(V,first_halve_training, second_halve_heldout,'unseen-word')}")
+    logger.info(f"#Output23\t{held_out(V,first_halve_training, second_halve_heldout,args.input_word)}")
+    logger.info(f"#Output24\t{held_out(V,first_halve_training, second_halve_heldout,'unseen-word')}")
 
 
 
