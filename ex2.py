@@ -6,6 +6,9 @@ import sys
 import logging
 from collections import Counter,defaultdict
 from math import log2
+import time
+
+
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -33,6 +36,25 @@ def build_parser() -> argparse.ArgumentParser:
         "output_file",
         type=str,
         help="Path to the output filename (string)."
+    )
+
+    def str2bool(v):
+        if isinstance(v, bool):
+            return v
+        v = v.lower()
+        if v in ("yes", "true", "t", "1"):
+            return True
+        elif v in ("no", "false", "f", "0"):
+            return False
+        else:
+            raise argparse.ArgumentTypeError("Boolean value expected.")
+
+    parser.add_argument(
+        "fastExecution",
+        type=str2bool,
+        nargs="?",
+        default=False,
+        help="fastExecution (True/False). Default: False."
     )
 
     return parser
@@ -91,12 +113,30 @@ def lidstone_estimate(count_word: int, S: int, V: int, lam: float) -> float:
     return (count_word + lam) / (S + lam * V)
 
 
-def perplexity(lam, validation_set, vocabulary, N_train, V):
+def perplexity_lidstone(lam, validation_set, vocabulary, N_train, V):
     return 2 ** (
         (-1 / len(validation_set)) *
         sum(
             log2(lidstone_estimate(vocabulary.get(word, 0), 
                                    N_train, V, lam))
+            for word in validation_set
+        )
+    )
+
+def perplexity_heldout(validation_set, V, train, heldout):
+    """
+    validation_set : list of tokens to evaluate
+    V              : vocabulary dictionary (word -> count in training)
+    train          : training set frequency dictionary
+    heldout        : held-out set frequency dictionary
+    """
+
+    return 2 ** (
+        (-1 / len(validation_set)) *
+        sum(
+            log2(
+                held_out(V, train, heldout, word)
+            )
             for word in validation_set
         )
     )
@@ -200,6 +240,8 @@ def debug_models(words, V, lam):
 
 
 def main(argv=None):
+    start = time.perf_counter()
+
     argv = argv if argv is not None else sys.argv[1:]
     parser = build_parser()
     args = parser.parse_args(argv)
@@ -242,16 +284,30 @@ def main(argv=None):
     logger.info(f"#Output14\t{lidstone_estimate(vocabulary[args.input_word], N, V, 0.1)}")
     logger.info(f"#Output15\t{lidstone_estimate(vocabulary['unseen-word'], N, V, 0.1)}")
 
-    perplexities = {}
-    for i in range (1,200):
-        lam = i / 100
-        perplexities[lam] =  perplexity(lam, validation_set, vocabulary, N, V)
+    
+    end = time.perf_counter()
+    print(f"before perplexities :: Execution time: {end - start:.6f} seconds")
 
+    perplexities = {}
+    perplexities_range = range (1,200)
+    if args.fastExecution:
+        print("fast execution mode on - reducing perplexity calculations")
+        perplexities_range = [1,6,10,100]
+
+    for i in perplexities_range:
+        lam = i / 100
+        perplexities[lam] = perplexity_lidstone(lam, validation_set, vocabulary, N, V)
+
+
+    
+    end = time.perf_counter()
+    print(f"after perplexities :: Execution time: {end - start:.6f} seconds")
 
     logger.info(f"#Output16\t{perplexities[0.01]}")
     logger.info(f"#Output17\t{perplexities[0.1]}")
     logger.info(f"#Output18\t{perplexities[1]}")
-    logger.info(f"#Output19\t{min(perplexities, key=perplexities.get)}")
+    min_lam = min(perplexities, key=perplexities.get)
+    logger.info(f"#Output19\t{min_lam}")
     logger.info(f"#Output20\t{min(perplexities.values())}")
 
     # 4. Held out model training
@@ -264,18 +320,41 @@ def main(argv=None):
     logger.info(f"#Output23\t{held_out(V,first_halve_training, second_halve_heldout,args.input_word)}")
     logger.info(f"#Output24\t{held_out(V,first_halve_training, second_halve_heldout,'unseen-word')}")
 
+    
+    
+    end = time.perf_counter()
+    print(f"after heldout before debugging :: Execution time: {end - start:.6f} seconds")
+
     #5 debugging modules:
-    for modelName in ["lidstone", "heldOut"]:
+    if not args.fastExecution:
         debug_models(train_set_words,V ,lam=0.1)
 
 
+        
+    end = time.perf_counter()
+    print(f"after debugging :: Execution time: {end - start:.6f} seconds")
+
+
     test_words = parse_text_words(args.test_set,True)
+    test_N = len(test_words)
     logger.info(f"#Output25\t{len(test_words)}")
 
+    test_set_perplexity = perplexity_lidstone(min_lam, test_words, vocabulary, test_N, V)
+    logger.info(f"#Output26\t{test_set_perplexity}")
+
+    test_perplexity_heldout_value = perplexity_heldout(test_words, V, first_halve_training, second_halve_heldout)
+    logger.info(f"#Output27\t{test_perplexity_heldout_value}")
+
+    if test_set_perplexity < test_perplexity_heldout_value:
+        logger.info(f"#Output28\tL")
+    else:
+        logger.info(f"#Output28\tH")
 
 
 
 
+    end = time.perf_counter()
+    print(f"after all :: Execution time: {end - start:.6f} seconds")
 
 
 
