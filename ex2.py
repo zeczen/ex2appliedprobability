@@ -356,7 +356,6 @@ def main(argv=None):
     logger.info(f"#Output6\t{1 / V}")
 
     # 2. Development set preprocessing
-    #train_set = parse_text(args.development_set)
     train_set_words = parse_text_words(args.development_set,False)
     logger.info(f"#Output7\t{len(train_set_words)}")
 
@@ -366,32 +365,31 @@ def main(argv=None):
     logger.info(f"#Output8\t{len(validation_set)}")
     logger.info(f"#Output9\t{len(train_set)}")
 
-    vocabulary = Counter(word for s in train_set for word in s.split())
-    #V = len(vocabulary)
-    #N = sum(vocabulary.values())
+    vocabulary_train_set = Counter(word for s in train_set for word in s.split())
+    
     N = len(train_set)
-    logger.info(f"#Output10\t{len(vocabulary)}")
-    logger.info(f"#Output11\t{vocabulary[args.input_word]}")
+    logger.info(f"#Output10\t{len(vocabulary_train_set)}")
+    logger.info(f"#Output11\t{vocabulary_train_set[args.input_word]}")
 
-    logger.info(f"#Output12\t{maximum_likelihood_estimate(vocabulary[args.input_word], N)}")
-    logger.info(f"#Output13\t{maximum_likelihood_estimate(vocabulary['unseen-word'], N)}")
+    logger.info(f"#Output12\t{maximum_likelihood_estimate(vocabulary_train_set[args.input_word], N)}")
+    logger.info(f"#Output13\t{maximum_likelihood_estimate(vocabulary_train_set['unseen-word'], N)}")
 
-    logger.info(f"#Output14\t{lidstone_estimate(vocabulary[args.input_word], N, V, 0.1)}")
-    logger.info(f"#Output15\t{lidstone_estimate(vocabulary['unseen-word'], N, V, 0.1)}")
+    logger.info(f"#Output14\t{lidstone_estimate(vocabulary_train_set[args.input_word], N, V, 0.1)}")
+    logger.info(f"#Output15\t{lidstone_estimate(vocabulary_train_set['unseen-word'], N, V, 0.1)}")
 
     
     end = time.perf_counter()
     print(f"before perplexities :: Execution time: {end - start:.6f} seconds")
 
     perplexities = {}
-    perplexities_range = range (1,200)
+    perplexities_range = range (0,200)
     if args.executionType == "fastest":
         print("fast execution mode on - reducing perplexity calculations")
         perplexities_range = [1,6,10,100]
 
     for i in perplexities_range:
         lam = i / 100
-        perplexities[lam] = perplexity_lidstone(lam, validation_set, vocabulary, N, V)
+        perplexities[lam] = perplexity_lidstone(lam, validation_set, vocabulary_train_set, N, V)
 
 
     
@@ -437,7 +435,7 @@ def main(argv=None):
     
     print(f"after parse_text_words  for test, before perplexity_lidstone  time: {end - start:.6f} seconds")
 
-    test_set_perplexity = perplexity_lidstone(min_lam, test_words, vocabulary, test_N, V)
+    test_set_perplexity = perplexity_lidstone(min_lam, test_words, vocabulary_train_set, N, V)
     logger.info(f"#Output26\t{test_set_perplexity}")
 
 
