@@ -9,41 +9,45 @@ from math import log2
 import time
 
 
-def compute_and_output29_table(train_half, heldout_half, V, best_lam,logger):
-    CT = Counter(train_half)
-    CH = Counter(heldout_half)
+def compute_and_output29_table(train_half, heldout_half, V, best_lam, len_train_set,logger):
+    train_counters = Counter(train_half)
+    heldout_counters = Counter(heldout_half)
 
-    T_size = len(train_half)
+
+    len_train = len(train_half)
     H_size = len(heldout_half)
 
     # r -> list of words
     freq_to_words = defaultdict(list)
-    for w, r in CT.items():
+    for w, r in train_counters.items():
         if r <= 9:
             freq_to_words[r].append(w)
 
     # r = 0 (unseen in training)
-    unseen_words = set(CH.keys()) - set(CT.keys())
+    unseen_words = set(heldout_counters.keys()) - set(train_counters.keys())
     freq_to_words[0] = list(unseen_words)
 
-    for r in range(0, 10):  # EXACTLY 0..9
+    for r in range( 10):  # 0..9
         words_r = freq_to_words.get(r, [])
-
         Nr = len(words_r)
-        Tr = sum(CH[w] for w in words_r)
+        if r == 0 : # handling the special case of unseen words
+            Nr = V - len( set(train_counters.keys()))
+        Tr = sum( heldout_counters[w] for w in words_r)
 
         # f_lambda (Lidstone expected frequency)
-        p_lam = (r + best_lam) / (T_size + best_lam * V)
-        f_lam = p_lam * T_size
+        f_lam = lidstone_estimate(r,len_train_set,V,best_lam) * len_train_set
 
         # f_H (held-out expected frequency)
         if r == 0:
-            denom = (V - len(CT)) * H_size
+            denom = (V - len(train_counters)) * H_size
         else:
             denom = Nr * H_size
 
         p_H = Tr / denom if denom > 0 else 0.0
-        f_H = p_H * T_size
+        f_H = p_H * len_train
+
+
+       # f_H = held_out(V,train_half,heldout_half ,r) *len_train
 
         logger.info(
             f"{r}\t"
@@ -458,6 +462,7 @@ def main(argv=None):
         second_halve_heldout,
         V,
         min_lam,
+        len(train_set),
         logger
     )
 
