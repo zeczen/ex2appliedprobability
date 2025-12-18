@@ -351,7 +351,7 @@ def main(argv=None):
     # and args.output_file are available as strings.
 
     # 1. Init
-    logger.info(f"#Students\tEyal\tSeckbach\t324863539\tNitzan\tDavari\t301733408")
+    logger.info(f"#Student\tEyal Seckbach\t324863539\tNitzan Davari\t301733408")
     logger.info(f"#Output1\t{args.development_set}")
     logger.info(f"#Output2\t{args.test_set}")
     logger.info(f"#Output3\t{args.input_word}")
@@ -455,7 +455,7 @@ def main(argv=None):
 
     print(f" before output29 table  time: {end - start:.6f} seconds")
 
-    logger.info(f"#Output29\t")
+    logger.info(f"#Output29")
         # Output29
     compute_and_output29_table(
         first_halve_training,
