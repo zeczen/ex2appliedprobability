@@ -1,3 +1,4 @@
+
 # Students Eyal Seckbach 324863539
 
 import argparse
@@ -152,7 +153,7 @@ def main(argv=None):
     # and args.output_file are available as strings.
 
     # 1. Init
-    logger.info(f"#Students\tEyal\tSeckbach\t324863539")
+    logger.info(f"#Students\tEyal Seckbach\t324863539")
     logger.info(f"#Output1\t{args.development_set}")
     logger.info(f"#Output2\t{args.test_set}")
     logger.info(f"#Output3\t{args.input_word}")
@@ -233,6 +234,7 @@ def main(argv=None):
 
     logger.info(f"#Output29")
     for r in range(10):
+        f_lam = N * lidstone_estimate(r, N, V, min_lam)
         f_lam = N * lidstone_estimate(r, N, V, min_lam)
         f_h = f_voc.total() * p_ho[r]
         Ntr = sum(1 for c in f_voc.values() if c == r)
